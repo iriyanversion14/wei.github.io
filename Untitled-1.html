@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>票卷計算機</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #f4f7fc, #e0eafc);
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: #ffffff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 30px 40px;
+            width: 100%;
+            max-width: 480px;
+            transition: transform 0.3s ease-in-out;
+        }
+        .container:hover {
+            transform: scale(1.02);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4a90e2;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        input:focus {
+            border-color: #4a90e2;
+            outline: none;
+        }
+        button {
+            padding: 12px 25px;
+            margin: 10px 5px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: #4a90e2;
+            color: white;
+            font-weight: bold;
+            transition: background-color 0.3s ease, transform 0.2s;
+        }
+        button:hover {
+            background-color: #357abd;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(1px);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            color: #333;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+        .buttons button {
+            width: 32%;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px 30px;
+                width: 100%;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            .buttons button {
+                width: 48%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>票卷計算機</h1>
+        <div class="input-group">
+            <label for="start-level">初始等級</label>
+            <input type="number" id="start-level" min="200" max="259" required>
+        </div>
+        <div class="input-group">
+            <label for="start-exp">初始經驗 (%)</label>
+            <input type="number" id="start-exp" min="0" max="99.99" step="0.01" required>
+        </div>
+        <div class="input-group">
+            <label for="target-level">目標等級</label>
+            <input type="number" id="target-level" min="201" max="260" required>
+        </div>
+        <div class="input-group">
+            <label>燃燒模式</label>
+            <div class="buttons">
+                <button onclick="calculate('none')">無燃燒</button>
+                <button onclick="calculate('1+2')">1+2燃燒</button>
+                <button onclick="calculate('1+4')">1+4燃燒</button>
+            </div>
+        </div>
+        <div class="result" id="result">
+            <p>請輸入初始等級、初始經驗、目標等級並選擇燃燒模式。</p>
+        </div>
+    </div>
+
+    <script>
+        const levelData = {
+            200: 299, 201: 326, 202: 355, 203: 386, 204: 422, 205: 461, 206: 503, 207: 549, 208: 600, 209: 657,
+            210: 428, 211: 465, 212: 503, 213: 546, 214: 593, 215: 753, 216: 803, 217: 856, 218: 914, 219: 975,
+            220: 1242, 221: 1300, 222: 1364, 223: 1429, 224: 1501, 225: 1911, 226: 2003, 227: 2105, 228: 2207,
+            229: 2315, 230: 2836, 231: 2865, 232: 2896, 233: 2933, 234: 2965, 235: 3784, 236: 3826, 237: 3879,
+            238: 3924, 239: 3971, 240: 5073, 241: 5066, 242: 5129, 243: 5205, 244: 5271, 245: 6740, 246: 6829,
+            247: 6920, 248: 7014, 249: 7110, 250: 10088, 251: 10229, 252: 10374, 253: 10523, 254: 10675,
+            255: 10831, 256: 10990, 257: 11154, 258: 11302, 259: 11473, 260: 22619
+        };
+
+        function calculate(mode) {
+            const startLevel = parseInt(document.getElementById('start-level').value);
+            const startExp = parseFloat(document.getElementById('start-exp').value);
+            const targetLevel = parseInt(document.getElementById('target-level').value);
+            
+            // 檢查目標等級和初始經驗的限制
+            if (isNaN(startLevel) || isNaN(startExp) || isNaN(targetLevel)) {
+                alert("請正確填寫所有欄位。");
+                return;
+            }
+
+            if (startLevel >= targetLevel || targetLevel > 260 || targetLevel < 201) {
+                alert("目標等級必須大於初始等級，並且介於201和260之間。");
+                return;
+            }
+
+            if (startExp < 0 || startExp >= 100) {
+                alert("初始經驗必須在0%和100%之間。");
+                return;
+            }
+
+            let totalTickets = 0;
+            let currentLevel = startLevel;
+            let expNeeded = 100 - startExp;
+
+            if (mode === 'none') {
+                totalTickets += Math.ceil((expNeeded / 100) * levelData[currentLevel]);
+                currentLevel++;
+                while (currentLevel < targetLevel) {
+                    totalTickets += levelData[currentLevel];
+                    currentLevel++;
+                }
+            } else if (mode === '1+2') {
+                while (currentLevel < targetLevel) {
+                    totalTickets += Math.ceil((expNeeded / 100) * levelData[currentLevel]);
+                    currentLevel += 3;
+                    expNeeded = 100;
+                }
+                if (currentLevel > targetLevel) {
+                    totalTickets -= levelData[currentLevel - 3];
+                }
+            } else if (mode === '1+4') {
+                while (currentLevel < targetLevel) {
+                    totalTickets += Math.ceil((expNeeded / 100) * levelData[currentLevel]);
+                    currentLevel += 5;
+                    expNeeded = 100;
+                }
+                if (currentLevel > targetLevel) {
+                    totalTickets -= levelData[currentLevel - 5];
+                }
+            }
+
+            document.getElementById('result').innerHTML = `<p>所需票卷總數：<strong>${totalTickets}</strong></p>`;
+        }
+    </script>
+</body>
+</html>
